@@ -27,7 +27,40 @@ def xyz2rae(xyz: np.ndarray) -> np.ndarray:
     dist_xy = np.sqrt(x**2 + y**2)
 
     a = np.rad2deg(np.arctan2(y, x))
-    v = np.rad2deg(np.arctan2(z, dist_xy))
+    e = np.rad2deg(np.arctan2(z, dist_xy))
     r = np.sqrt(x**2 + y**2 + z**2)
 
-    return np.stack((r, a, v), axis=1)
+    return np.stack((r, a, e), axis=1)
+
+
+def ndarray2tensor(ndarray: np.ndarray, batch_size=1):
+    """Convert ndaaray[H,W,C] to tensor[B,C,H,W].
+    Assume batch_size=1.
+    """
+
+    row, col, channel = map(int, ndarray.shape)
+
+    transform = transforms.Compose([transforms.ToTensor()])
+    tensor = transform(ndarray)
+
+    if batch_size == None:
+        return tensor
+    else:
+        return torch.reshape(tensor, (batch_size, channel, row, col))
+
+
+def tensor2ndarray(tensor: torch.Tensor):
+    """Convert tensor[B,C,H,W] to ndarray[H,W,C].
+    The input tensor batch size must be 1.
+    """
+
+    batch_size, channel, row, col = map(int, tensor.shape)
+
+    tensor = tensor.reshape(channel, row, col)
+    ndarray = tensor.detach().numpy()
+
+    # Convert from (C, H, W) to (H, W, C)
+    ndarray = ndarray.transpose((1, 2, 0))
+    return ndarray
+
+
